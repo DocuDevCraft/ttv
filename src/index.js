@@ -8,6 +8,7 @@ const fs = require('fs');
 const { initCleanupJob } = require('./cleanup');
 const { initDB } = require('./db');
 const { authenticateToken, login, changePassword } = require('./auth');
+const { startTranscode, TRANSCODE_DIR } = require('./transcode');
 
 const app = express();
 const PORT = 2096;
@@ -24,6 +25,9 @@ const client = new WebTorrent();
 app.use(cors());
 app.use(express.json());
 app.use(morgan('combined'));
+// Serve static files for HLS (segments and playlists)
+// We use a specific route prefix to protect them if needed, or serve publicly but behind auth middleware
+app.use('/stream', authenticateToken, express.static(TRANSCODE_DIR));
 
 // Initialize Cron Job
 initCleanupJob();
@@ -41,6 +45,40 @@ app.post('/auth/login', login);
 app.use(authenticateToken); // Apply auth middleware to all subsequent routes
 
 app.post('/auth/change-password', changePassword);
+
+/**
+ * GET /stream/init/:infoHash
+ * Initializes transcoding for the largest file in the torrent and returns the playlist URL.
+ */
+app.get('/stream/init/:infoHash', async (req, res) => {
+  const { infoHash } = req.params;
+  const torrent = client.get(infoHash);
+
+  if (!torrent) {
+    return res.status(404).json({ error: 'Torrent not found' });
+  }
+
+  // Find the largest file (usually the movie)
+  const file = torrent.files.reduce((a, b) => (a.length > b.length ? a : b));
+
+  if (!file) {
+    return res.status(404).json({ error: 'No files found in torrent' });
+  }
+
+  try {
+    // Start transcoding
+    await startTranscode(file, infoHash);
+
+    // Return the URL to the playlist
+    // Since we mounted TRANSCODE_DIR at /stream, the URL is /stream/<infoHash>/playlist.m3u8
+    res.json({
+      url: `/stream/${infoHash}/playlist.m3u8`
+    });
+  } catch (err) {
+    console.error('Streaming error:', err);
+    res.status(500).json({ error: 'Failed to start stream' });
+  }
+});
 
 /**
  * GET /torrents

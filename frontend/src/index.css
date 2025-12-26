@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Vidstack Defaults */
+.vds-player {
+  --media-brand: #f59e0b;
+  --media-focus-ring: #3b82f6;
+}

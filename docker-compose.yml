@@ -8,20 +8,29 @@ services:
     ports:
       - "2096:2096"
     volumes:
-      # Map the local downloads folder to the container's /downloads
       - ./downloads:/downloads
-      # Persist user data
       - ./data:/app/data
-      # Map certs if you want to provide your own or persist generated ones
       - ./certs:/app/certs
     environment:
       - PORT=2096
       - NODE_ENV=production
-      # - JWT_SECRET=your_jwt_secret_here (optional, defaults to placeholder)
-    # Healthcheck to ensure the service is running (updated for HTTPS)
     healthcheck:
-      # Use --no-check-certificate because it is self-signed
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://localhost:2096/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+  torrent-frontend:
+    # Basic dev server for now. In prod, we'd build and serve via Nginx.
+    # Using node alpine to run "npm run dev" or serve build.
+    image: node:20-alpine
+    container_name: torrent-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    # Need to expose 5173 for Vite dev server
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Better for watching files in docker
+    command: sh -c "npm install && npm run dev -- --host"

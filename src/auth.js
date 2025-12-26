@@ -9,7 +9,12 @@ const SECRET_KEY = process.env.JWT_SECRET || 'default_secret_please_change_me';
  */
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  let token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  // Also check for token in query parameters (for HLS streams)
+  if (!token && req.query.token) {
+    token = req.query.token;
+  }
 
   if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
 

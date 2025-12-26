@@ -4,8 +4,10 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies (openssl is required for the entrypoint script)
-RUN apk add --no-cache openssl
+# Install system dependencies
+# openssl: for certificate generation
+# ffmpeg: for video transcoding
+RUN apk add --no-cache openssl ffmpeg
 
 # Copy package files first to leverage Docker cache
 COPY package.json ./

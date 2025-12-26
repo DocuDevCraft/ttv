@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  torrent-backend:
+    build: .
+    container_name: torrent-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Map the local downloads folder to the container's /downloads
+      - ./downloads:/downloads
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    # Healthcheck to ensure the service is running
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

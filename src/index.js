@@ -3,11 +3,19 @@ const WebTorrent = require('webtorrent');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
+const https = require('https');
+const fs = require('fs');
 const { initCleanupJob } = require('./cleanup');
+const { initDB } = require('./db');
+const { authenticateToken, login, changePassword } = require('./auth');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 2096;
 const DOWNLOAD_DIR = '/downloads';
+const CERT_DIR = path.join(__dirname, '../certs');
+
+// Ensure database is initialized
+initDB();
 
 // Initialize WebTorrent Client
 const client = new WebTorrent();
@@ -21,6 +29,18 @@ app.use(morgan('combined'));
 initCleanupJob();
 
 // Routes
+
+// Public Routes
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+app.post('/auth/login', login);
+
+// Protected Routes
+app.use(authenticateToken); // Apply auth middleware to all subsequent routes
+
+app.post('/auth/change-password', changePassword);
 
 /**
  * GET /torrents
@@ -102,16 +122,22 @@ app.delete('/torrents/:infoHash', (req, res) => {
   });
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
-});
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Download directory: ${DOWNLOAD_DIR}`);
-});
+// Start Server with SSL
+try {
+  const key = fs.readFileSync(path.join(CERT_DIR, 'key.pem'));
+  const cert = fs.readFileSync(path.join(CERT_DIR, 'cert.pem'));
+
+  const server = https.createServer({ key, cert }, app);
+
+  server.listen(PORT, () => {
+    console.log(`HTTPS Server running on port ${PORT}`);
+    console.log(`Download directory: ${DOWNLOAD_DIR}`);
+  });
+} catch (error) {
+  console.error('Failed to start HTTPS server:', error.message);
+  process.exit(1);
+}
 
 // Graceful Shutdown
 process.on('SIGTERM', () => {

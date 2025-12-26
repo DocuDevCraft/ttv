@@ -6,16 +6,22 @@ services:
     container_name: torrent-backend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "2096:2096"
     volumes:
       # Map the local downloads folder to the container's /downloads
       - ./downloads:/downloads
+      # Persist user data
+      - ./data:/app/data
+      # Map certs if you want to provide your own or persist generated ones
+      - ./certs:/app/certs
     environment:
-      - PORT=3000
+      - PORT=2096
       - NODE_ENV=production
-    # Healthcheck to ensure the service is running
+      # - JWT_SECRET=your_jwt_secret_here (optional, defaults to placeholder)
+    # Healthcheck to ensure the service is running (updated for HTTPS)
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      # Use --no-check-certificate because it is self-signed
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://localhost:2096/health"]
       interval: 30s
       timeout: 10s
       retries: 3

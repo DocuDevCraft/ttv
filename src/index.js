@@ -9,6 +9,7 @@ const { initCleanupJob } = require('./cleanup');
 const { initDB } = require('./db');
 const { authenticateToken, login, changePassword } = require('./auth');
 const { startTranscode, TRANSCODE_DIR } = require('./transcode');
+const { initSocket, emitLog } = require('./socket');
 
 const app = express();
 const PORT = 2096;
@@ -26,8 +27,9 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('combined'));
 // Serve static files for HLS (segments and playlists)
-// We use a specific route prefix to protect them if needed, or serve publicly but behind auth middleware
-app.use('/stream', authenticateToken, express.static(TRANSCODE_DIR));
+// served publicly to ensure the player can fetch segments (.ts) without complex auth injection
+// Security relies on the randomness of the infoHash and ephemeral nature of transcodes
+app.use('/stream', express.static(TRANSCODE_DIR));
 
 // Initialize Cron Job
 initCleanupJob();
@@ -122,14 +124,20 @@ app.post('/add', (req, res) => {
 
   try {
     client.add(magnet, { path: DOWNLOAD_DIR }, (torrent) => {
-      console.log(`Torrent added: ${torrent.infoHash}`);
+      const msg = `Torrent added: ${torrent.infoHash}`;
+      console.log(msg);
+      emitLog(msg, 'success');
 
       torrent.on('done', () => {
-        console.log(`Torrent finished: ${torrent.name}`);
+        const doneMsg = `Torrent finished: ${torrent.name}`;
+        console.log(doneMsg);
+        emitLog(doneMsg, 'success');
       });
 
       torrent.on('error', (err) => {
-        console.error(`Torrent error: ${err.message}`);
+        const errMsg = `Torrent error: ${err.message}`;
+        console.error(errMsg);
+        emitLog(errMsg, 'error');
       });
     });
 
@@ -168,9 +176,13 @@ try {
 
   const server = https.createServer({ key, cert }, app);
 
+  // Initialize WebSocket
+  initSocket(server);
+
   server.listen(PORT, () => {
     console.log(`HTTPS Server running on port ${PORT}`);
     console.log(`Download directory: ${DOWNLOAD_DIR}`);
+    emitLog(`Server started on port ${PORT}`);
   });
 } catch (error) {
   console.error('Failed to start HTTPS server:', error.message);

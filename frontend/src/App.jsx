@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Watch from './pages/Watch';
+import DebugConsole from './components/DebugConsole';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -34,6 +35,7 @@ function App() {
             element={token ? <Watch token={token} /> : <Navigate to="/login" />}
           />
         </Routes>
+        <DebugConsole />
       </div>
     </Router>
   );

@@ -1,6 +1,7 @@
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs-extra');
+const { emitLog, emitProgress } = require('./socket');
 
 const TRANSCODE_DIR = path.join(__dirname, '../transcodes');
 fs.ensureDirSync(TRANSCODE_DIR);
@@ -53,7 +54,9 @@ function startTranscode(file, infoHash) {
       ])
       .output(playlistPath)
       .on('start', () => {
-        console.log(`[Transcode] Started for ${file.name}`);
+        const msg = `[Transcode] Started for ${file.name}`;
+        console.log(msg);
+        emitLog(msg, 'success');
         activeTranscodes.set(infoHash, command);
 
         // Resolve once the playlist file is created
@@ -64,15 +67,24 @@ function startTranscode(file, infoHash) {
           }
         }, 1000);
       })
+      .on('progress', (progress) => {
+         // emitProgress({ infoHash, percent: progress.percent }); // Fluent ffmpeg gives percent if length known
+         // For streams, percent might be undefined.
+      })
+      .on('stderr', (stderrLine) => {
+          // Send ffmpeg logs to console for deep debugging
+          // emitLog(`FFmpeg: ${stderrLine}`, 'debug');
+      })
       .on('error', (err) => {
-        console.error(`[Transcode] Error: ${err.message}`);
+        const msg = `[Transcode] Error: ${err.message}`;
+        console.error(msg);
+        emitLog(msg, 'error');
         cleanupTranscode(infoHash);
-        // If we haven't resolved yet, reject
-        // We might need a flag to know if we already resolved
       })
       .on('end', () => {
-        console.log(`[Transcode] Finished for ${file.name}`);
-        // Optionally cleanup after some time
+        const msg = `[Transcode] Finished for ${file.name}`;
+        console.log(msg);
+        emitLog(msg, 'success');
       });
 
     command.run();

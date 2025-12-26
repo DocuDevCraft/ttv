@@ -1,13 +1,13 @@
-const jwt = require('jsonwebtoken');
-const { getUser, updateUserPassword } = require('./db');
-const bcrypt = require('bcryptjs');
+import jwt from 'jsonwebtoken';
+import { getUser, updateUserPassword } from './db.js';
+import bcrypt from 'bcryptjs';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'default_secret_please_change_me';
 
 /**
  * Middleware to verify JWT token.
  */
-function authenticateToken(req, res, next) {
+export function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   let token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -28,7 +28,7 @@ function authenticateToken(req, res, next) {
 /**
  * Login handler
  */
-async function login(req, res) {
+export async function login(req, res) {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -54,7 +54,7 @@ async function login(req, res) {
 /**
  * Change Password handler
  */
-async function changePassword(req, res) {
+export async function changePassword(req, res) {
   const { newPassword } = req.body;
   const username = req.user.username; // From middleware
 
@@ -69,9 +69,3 @@ async function changePassword(req, res) {
     res.status(500).json({ error: 'Failed to update password' });
   }
 }
-
-module.exports = {
-  authenticateToken,
-  login,
-  changePassword
-};

@@ -1,8 +1,8 @@
-const { Server } = require('socket.io');
+import { Server } from 'socket.io';
 
 let io;
 
-function initSocket(httpServer) {
+export function initSocket(httpServer) {
   io = new Server(httpServer, {
     cors: {
       origin: "*", // Adjust in production
@@ -15,16 +15,14 @@ function initSocket(httpServer) {
   });
 }
 
-function emitLog(message, type = 'info') {
+export function emitLog(message, type = 'info') {
   if (io) {
     io.emit('log', { message, type, timestamp: new Date() });
   }
 }
 
-function emitProgress(data) {
+export function emitProgress(data) {
     if (io) {
         io.emit('progress', data);
     }
 }
-
-module.exports = { initSocket, emitLog, emitProgress };

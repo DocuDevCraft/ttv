@@ -60,3 +60,28 @@ A robust, self-hosted torrent streaming platform built with Node.js, React, and 
 ## License
 
 MIT
+
+## Updates & Maintenance
+
+### How to update the project
+
+If a new commit has been pushed to the repository, follow these steps to update your running instance:
+
+1.  **Pull the latest changes**:
+    ```bash
+    git pull origin main
+    ```
+    *(Replace `main` with your branch name if different)*
+
+2.  **Rebuild the Docker images**:
+    To ensure all new dependencies and code changes are applied, rebuild the containers:
+    ```bash
+    docker-compose up -d --build
+    ```
+    The `--build` flag forces Docker to rebuild the images using the updated `package.json` and source code.
+
+3.  **Verify**:
+    Check the logs to ensure everything started correctly:
+    ```bash
+    docker-compose logs -f
+    ```

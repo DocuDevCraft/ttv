@@ -1,15 +1,20 @@
-const express = require('express');
-const WebTorrent = require('webtorrent');
-const cors = require('cors');
-const morgan = require('morgan');
-const path = require('path');
-const https = require('https');
-const fs = require('fs');
-const { initCleanupJob } = require('./cleanup');
-const { initDB } = require('./db');
-const { authenticateToken, login, changePassword } = require('./auth');
-const { startTranscode, TRANSCODE_DIR } = require('./transcode');
-const { initSocket, emitLog } = require('./socket');
+import express from 'express';
+import WebTorrent from 'webtorrent';
+import cors from 'cors';
+import morgan from 'morgan';
+import path from 'path';
+import https from 'https';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { initCleanupJob } from './cleanup.js';
+import { initDB } from './db.js';
+import { authenticateToken, login, changePassword } from './auth.js';
+import { startTranscode, TRANSCODE_DIR } from './transcode.js';
+import { initSocket, emitLog } from './socket.js';
+
+// ESM replacement for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 2096;
@@ -27,8 +32,6 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('combined'));
 // Serve static files for HLS (segments and playlists)
-// served publicly to ensure the player can fetch segments (.ts) without complex auth injection
-// Security relies on the randomness of the infoHash and ephemeral nature of transcodes
 app.use('/stream', express.static(TRANSCODE_DIR));
 
 // Initialize Cron Job
@@ -72,7 +75,6 @@ app.get('/stream/init/:infoHash', async (req, res) => {
     await startTranscode(file, infoHash);
 
     // Return the URL to the playlist
-    // Since we mounted TRANSCODE_DIR at /stream, the URL is /stream/<infoHash>/playlist.m3u8
     res.json({
       url: `/stream/${infoHash}/playlist.m3u8`
     });
@@ -104,7 +106,6 @@ app.get('/torrents', (req, res) => {
 /**
  * POST /add
  * Adds a new magnet link to the download queue.
- * Body: { "magnet": "magnet:?xt=urn:btih:..." }
  */
 app.post('/add', (req, res) => {
   const { magnet } = req.body;

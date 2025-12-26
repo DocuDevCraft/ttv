@@ -1,7 +1,11 @@
-const ffmpeg = require('fluent-ffmpeg');
-const path = require('path');
-const fs = require('fs-extra');
-const { emitLog, emitProgress } = require('./socket');
+import ffmpeg from 'fluent-ffmpeg';
+import path from 'path';
+import fs from 'fs-extra';
+import { emitLog, emitProgress } from './socket.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const TRANSCODE_DIR = path.join(__dirname, '../transcodes');
 fs.ensureDirSync(TRANSCODE_DIR);
@@ -11,7 +15,7 @@ const activeTranscodes = new Map();
 /**
  * Cleanup function to remove old transcodes
  */
-function cleanupTranscode(infoHash) {
+export function cleanupTranscode(infoHash) {
   const dir = path.join(TRANSCODE_DIR, infoHash);
   if (fs.existsSync(dir)) {
     fs.removeSync(dir);
@@ -25,7 +29,7 @@ function cleanupTranscode(infoHash) {
  * @param {string} infoHash - Torrent infoHash
  * @returns {Promise<string>} - Path to the playlist file (m3u8)
  */
-function startTranscode(file, infoHash) {
+export function startTranscode(file, infoHash) {
   return new Promise((resolve, reject) => {
     const outputDir = path.join(TRANSCODE_DIR, infoHash);
     const playlistPath = path.join(outputDir, 'playlist.m3u8');
@@ -40,9 +44,6 @@ function startTranscode(file, infoHash) {
     const stream = file.createReadStream();
 
     // Simple command to convert to HLS
-    // Note: On-the-fly transcoding from a torrent stream can be unstable if download is slow.
-    // ffmpeg needs a steady stream.
-
     const command = ffmpeg(stream)
       .addOptions([
         '-profile:v baseline', // Baseline profile for broad compatibility
@@ -68,11 +69,9 @@ function startTranscode(file, infoHash) {
         }, 1000);
       })
       .on('progress', (progress) => {
-         // emitProgress({ infoHash, percent: progress.percent }); // Fluent ffmpeg gives percent if length known
-         // For streams, percent might be undefined.
+         // emitProgress({ infoHash, percent: progress.percent });
       })
       .on('stderr', (stderrLine) => {
-          // Send ffmpeg logs to console for deep debugging
           // emitLog(`FFmpeg: ${stderrLine}`, 'debug');
       })
       .on('error', (err) => {
@@ -91,14 +90,4 @@ function startTranscode(file, infoHash) {
   });
 }
 
-/**
- * Middleware to stop transcode if client disconnects?
- * Hard for HLS because it's stateless HTTP requests.
- * We'll rely on a timeout or explicit stop.
- */
-
-module.exports = {
-  startTranscode,
-  cleanupTranscode,
-  TRANSCODE_DIR
-};
+export { TRANSCODE_DIR };

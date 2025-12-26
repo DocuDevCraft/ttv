@@ -1,6 +1,10 @@
-const fs = require('fs-extra');
-const path = require('path');
-const schedule = require('node-schedule');
+import fs from 'fs-extra';
+import path from 'path';
+import schedule from 'node-schedule';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const DOWNLOAD_DIR = '/downloads';
 const RETENTION_DAYS = 7;
@@ -29,7 +33,7 @@ async function isOld(filePath) {
 /**
  * Scans the download directory and removes old files.
  */
-async function cleanOldDownloads() {
+export async function cleanOldDownloads() {
   console.log('Starting cleanup job...');
   try {
     const exists = await fs.pathExists(DOWNLOAD_DIR);
@@ -57,10 +61,8 @@ async function cleanOldDownloads() {
  * Initializes the cleanup schedule.
  * Runs every day at 00:00.
  */
-function initCleanupJob() {
+export function initCleanupJob() {
   // Run every day at midnight
   schedule.scheduleJob('0 0 * * *', cleanOldDownloads);
   console.log('Cleanup job scheduled to run daily at 00:00');
 }
-
-module.exports = { initCleanupJob, cleanOldDownloads };

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Play, Trash2, LogOut, Plus, RefreshCw, HardDrive, Download, Upload, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_URL = 'https://localhost:2096';
+const API_URL = '';
 
 export default function Dashboard({ token, onLogout }) {
   const [torrents, setTorrents] = useState([]);

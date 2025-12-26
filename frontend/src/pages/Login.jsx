@@ -3,7 +3,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Lock, User, LogIn, AlertCircle } from 'lucide-react';
 
-const API_URL = 'https://localhost:2096';
+const API_URL = '';
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');

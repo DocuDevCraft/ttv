@@ -1,23 +1,35 @@
 # Use Node.js LTS (Long Term Support) Alpine version for a small footprint
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+# Install dependencies
+RUN npm ci
+COPY frontend/ ./
+# Build the frontend (Vite builds to dist/ by default)
+RUN npm run build
+
+# --- Final Stage ---
 FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
 # Install system dependencies
-# openssl: for certificate generation
-# ffmpeg: for video transcoding
 RUN apk add --no-cache openssl ffmpeg
 
-# Copy package files first to leverage Docker cache
+# Copy backend package files
 COPY package.json ./
 
-# Install dependencies (using install instead of ci because package-lock.json might not exist yet in dev)
+# Install backend dependencies
 RUN npm install --omit=dev
 
-# Copy the rest of the application code
+# Copy the backend code
 COPY src ./src
 COPY entrypoint.sh ./entrypoint.sh
+
+# Copy the frontend build from the builder stage to public/
+COPY --from=frontend-builder /frontend/dist ./public
 
 # Ensure entrypoint is executable
 RUN chmod +x entrypoint.sh
@@ -28,8 +40,8 @@ RUN mkdir -p /downloads
 # Expose the API port
 EXPOSE 2096
 
-# Volume configuration is usually done in docker-compose, but we can declare it here for documentation
-VOLUME ["/downloads"]
+# Volume configuration
+VOLUME ["/downloads", "/app/data", "/app/certs"]
 
 # Start the application using the entrypoint script
 ENTRYPOINT ["./entrypoint.sh"]

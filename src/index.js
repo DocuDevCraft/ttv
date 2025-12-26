@@ -20,6 +20,7 @@ const app = express();
 const PORT = 2096;
 const DOWNLOAD_DIR = '/downloads';
 const CERT_DIR = path.join(__dirname, '../certs');
+const FRONTEND_DIR = path.join(__dirname, '../public');
 
 // Ensure database is initialized
 initDB();
@@ -31,23 +32,31 @@ const client = new WebTorrent();
 app.use(cors());
 app.use(express.json());
 app.use(morgan('combined'));
-// Serve static files for HLS (segments and playlists)
+
+// 1. Serve HLS streams PUBLICLY (priority)
 app.use('/stream', express.static(TRANSCODE_DIR));
+
+// 2. Serve Frontend Static Files PUBLICLY
+// This allows serving index.html, assets, etc. without auth
+app.use(express.static(FRONTEND_DIR));
 
 // Initialize Cron Job
 initCleanupJob();
 
 // Routes
 
-// Public Routes
+// Public API Routes
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
 app.post('/auth/login', login);
 
-// Protected Routes
-app.use(authenticateToken); // Apply auth middleware to all subsequent routes
+// Protected API Routes
+// All routes below this line require authentication
+// We can group them under /api if we wanted, but existing frontend uses root paths.
+// We must ensure static files (above) are matched first.
+app.use(authenticateToken);
 
 app.post('/auth/change-password', changePassword);
 
@@ -169,6 +178,17 @@ app.delete('/torrents/:infoHash', (req, res) => {
   });
 });
 
+// Handle SPA Fallback (Must be last)
+// If request didn't match any API route or static file, serve index.html
+// This allows React Router to handle /watch/:hash etc.
+app.get('*', (req, res) => {
+  // Don't intercept API errors with index.html
+  if (req.accepts('html')) {
+     res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
+  } else {
+     res.status(404).json({ error: 'Not Found' });
+  }
+});
 
 // Start Server with SSL
 try {

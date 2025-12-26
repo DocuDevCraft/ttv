@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { MediaPlayer, MediaProvider } from '@vidstack/react';
 import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
 
-const API_URL = 'https://localhost:2096';
+const API_URL = '';
 
 export default function Watch({ token }) {
   const { infoHash } = useParams();

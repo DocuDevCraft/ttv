@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, X, ChevronUp, ChevronDown } from 'lucide-react';
 
-const SOCKET_URL = 'https://localhost:2096';
+const SOCKET_URL = '';
 
 export default function DebugConsole() {
   const [logs, setLogs] = useState([]);

@@ -24,11 +24,33 @@ const FRONTEND_DIR = path.join(__dirname, '../public');
 // Ensure database is initialized
 initDB();
 
+const ANNOUNCE_LIST = [
+  'udp://tracker.opentrackr.org:1337/announce',
+  'udp://tracker.openbittorrent.com:80',
+  'udp://tracker.coppersurfer.tk:6969',
+  'udp://p4p.arenabg.com:1337',
+  'udp://tracker.leechers-paradise.org:6969'
+];
+
 // Initialize WebTorrent Client
-const client = new WebTorrent();
+// Configure to bypass P2P blocking by disabling uTP and using random high ports
+const client = new WebTorrent({
+  utp: false, // Disable uTP (UDP) to avoid blocking
+  port: 50000 + Math.floor(Math.random() * 10000), // Random high port for TCP/uTP
+  torrentPort: 50000 + Math.floor(Math.random() * 10000), // Random high port (WebTorrent specific)
+  dhtPort: 50000 + Math.floor(Math.random() * 10000), // Random high port for DHT
+  tracker: {
+    rtcConfig: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' }
+      ]
+    }
+  }
+});
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: '*', methods: ['GET', 'POST'] }));
 app.use(express.json());
 app.use(morgan('combined'));
 
@@ -117,12 +139,18 @@ app.get('/torrents', (req, res) => {
  * Adds a new magnet link to the download queue.
  */
 app.post('/add', (req, res) => {
-  const { magnet } = req.body;
+  let { magnet } = req.body;
 
   console.log(`[DEBUG] Received add request. Magnet starts with: ${magnet?.substring(0, 20)}`);
 
   if (!magnet) {
     return res.status(400).json({ error: 'Magnet link is required' });
+  }
+
+  // Add helper trackers to magnet link
+  if (magnet.startsWith('magnet:?')) {
+    const trackers = ANNOUNCE_LIST.map(tr => `&tr=${encodeURIComponent(tr)}`).join('');
+    magnet += trackers;
   }
 
   try {

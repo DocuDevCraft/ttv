@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, X, ChevronUp, ChevronDown } from 'lucide-react';
 
-const SOCKET_URL = import.meta.env.DEV ? 'https://localhost:2096' : '/';
+const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:2096' : '/';
 
 export default function DebugConsole() {
   const [logs, setLogs] = useState([]);
@@ -11,16 +11,53 @@ export default function DebugConsole() {
   const logsEndRef = useRef(null);
 
   useEffect(() => {
+    // 1. Socket.io Connection
     const socket = io(SOCKET_URL, {
-      secure: true,
-      rejectUnauthorized: false // For self-signed certs
+      transports: ['websocket', 'polling'] // Explicitly fallback to avoid secure/insecure mismatch issues if any
     });
 
     socket.on('log', (log) => {
       setLogs((prev) => [...prev, log]);
     });
 
-    return () => socket.disconnect();
+    // 2. Intercept Browser Console Logs
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    const addClientLog = (message, type) => {
+      // Serialize objects if necessary
+      const formattedMessage = typeof message === 'object' ? JSON.stringify(message) : String(message);
+      setLogs((prev) => [...prev, {
+        message: `[CLIENT] ${formattedMessage}`,
+        type: type, // 'info', 'error', 'warn'
+        timestamp: new Date()
+      }]);
+    };
+
+    console.log = (...args) => {
+      originalLog(...args);
+      // Join args to mimic console behavior
+      addClientLog(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' '), 'info');
+    };
+
+    console.error = (...args) => {
+      originalError(...args);
+      addClientLog(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' '), 'error');
+    };
+
+    console.warn = (...args) => {
+      originalWarn(...args);
+      addClientLog(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' '), 'warn');
+    };
+
+    return () => {
+      socket.disconnect();
+      // Restore console
+      console.log = originalLog;
+      console.error = originalError;
+      console.warn = originalWarn;
+    };
   }, []);
 
   useEffect(() => {

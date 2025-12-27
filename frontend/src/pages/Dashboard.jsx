@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Play, Trash2, LogOut, Plus, RefreshCw, HardDrive, Download, Upload, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_URL = import.meta.env.DEV ? 'https://localhost:2096' : '';
+const API_URL = import.meta.env.DEV ? 'http://localhost:2096' : '';
 
 export default function Dashboard({ token, onLogout }) {
   const [torrents, setTorrents] = useState([]);
@@ -33,13 +33,19 @@ export default function Dashboard({ token, onLogout }) {
     e.preventDefault();
     if (!magnet) return;
     setLoading(true);
+    setError(''); // Clear previous errors
+
     try {
+      console.log(`[Dashboard] Adding magnet: ${magnet.substring(0, 20)}...`);
       await axios.post(`${API_URL}/add`, { magnet }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('[Dashboard] Magnet added successfully');
       setMagnet('');
+      // Force fetch immediately
       fetchTorrents();
     } catch (err) {
+      console.error('[Dashboard] Error adding torrent:', err);
       setError(err.response?.data?.error || 'Failed to add torrent');
     } finally {
       setLoading(false);

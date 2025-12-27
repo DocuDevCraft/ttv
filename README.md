@@ -6,7 +6,7 @@ A robust, self-hosted torrent streaming platform built with Node.js, React, and 
 
 -   **Torrent Management**: Add magnet links and monitor downloads in real-time.
 -   **Instant Streaming**: Watch videos immediately using on-the-fly HLS transcoding (FFmpeg).
--   **Secure**: HTTPS enforced, JWT authentication, and secure password management.
+-   **Secure**: JWT authentication and secure password management.
 -   **Persistent**: Downloads and user data persist across restarts via Docker Volumes.
 -   **Maintenance**: Automatic cleanup of files older than 7 days.
 -   **Live Debug**: Real-time console logs from the server directly in the UI.
@@ -31,8 +31,8 @@ A robust, self-hosted torrent streaming platform built with Node.js, React, and 
     *This might take a few minutes the first time to build the images and generate SSL certificates.*
 
 3.  **Access the Application**:
-    -   Open your browser and navigate to: `http://localhost:5173`
-    -   **Important**: Since the backend uses self-signed certificates, you must first visit `https://localhost:2096/health` and accept the security warning ("Proceed to localhost (unsafe)"). Then reload the frontend.
+    -   Open your browser and navigate to: `http://localhost:2096`
+    -   (Note: Port 5173 is used only for frontend development if running separately).
 
 4.  **Login**:
     -   **Username**: `admin`
@@ -46,9 +46,9 @@ A robust, self-hosted torrent streaming platform built with Node.js, React, and 
 
 ## Troubleshooting
 
--   **Video Error (401/404)**: Ensure you have accepted the self-signed certificate for port 2096.
+-   **Video Error (401/404)**: Check if the torrent has finished metadata fetching.
 -   **Download Stuck**: Check the Debug Console for "Torrent error" messages. Ensure the magnet link has active seeds.
--   **Mixed Content Error**: If the frontend doesn't load data, check your browser console. You might need to allow insecure content if running on localhost with mixed protocols (though localhost is usually exempt).
+-   **Connection Refused**: Ensure the Docker container is running (`docker-compose ps`).
 
 ## Architecture
 

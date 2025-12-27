@@ -3,8 +3,7 @@ import WebTorrent from 'webtorrent';
 import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
-import https from 'https';
-import fs from 'fs';
+import http from 'http';
 import { fileURLToPath } from 'url';
 import { initCleanupJob } from './cleanup.js';
 import { initDB } from './db.js';
@@ -19,7 +18,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 2096;
 const DOWNLOAD_DIR = '/downloads';
-const CERT_DIR = path.join(__dirname, '../certs');
 const FRONTEND_DIR = path.join(__dirname, '../public');
 
 // Ensure database is initialized
@@ -196,25 +194,17 @@ app.get('*', (req, res) => {
   }
 });
 
-// Start Server with SSL
-try {
-  const key = fs.readFileSync(path.join(CERT_DIR, 'key.pem'));
-  const cert = fs.readFileSync(path.join(CERT_DIR, 'cert.pem'));
+// Start Server (HTTP)
+const server = http.createServer(app);
 
-  const server = https.createServer({ key, cert }, app);
+// Initialize WebSocket
+initSocket(server);
 
-  // Initialize WebSocket
-  initSocket(server);
-
-  server.listen(PORT, () => {
-    console.log(`HTTPS Server running on port ${PORT}`);
-    console.log(`Download directory: ${DOWNLOAD_DIR}`);
-    emitLog(`Server started on port ${PORT}`);
-  });
-} catch (error) {
-  console.error('Failed to start HTTPS server:', error.message);
-  process.exit(1);
-}
+server.listen(PORT, () => {
+  console.log(`HTTP Server running on port ${PORT}`);
+  console.log(`Download directory: ${DOWNLOAD_DIR}`);
+  emitLog(`Server started on port ${PORT}`);
+});
 
 // Graceful Shutdown
 process.on('SIGTERM', () => {

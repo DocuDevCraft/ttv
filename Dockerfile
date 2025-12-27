@@ -16,7 +16,8 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install system dependencies
-RUN apk add --no-cache openssl ffmpeg
+# Removed openssl as we switched to HTTP
+RUN apk add --no-cache ffmpeg
 
 # Copy backend package files
 COPY package.json ./
@@ -26,13 +27,9 @@ RUN npm install --omit=dev
 
 # Copy the backend code
 COPY src ./src
-COPY entrypoint.sh ./entrypoint.sh
 
 # Copy the frontend build from the builder stage to public/
 COPY --from=frontend-builder /frontend/dist ./public
-
-# Ensure entrypoint is executable
-RUN chmod +x entrypoint.sh
 
 # Create the downloads directory
 RUN mkdir -p /downloads
@@ -41,7 +38,7 @@ RUN mkdir -p /downloads
 EXPOSE 2096
 
 # Volume configuration
-VOLUME ["/downloads", "/app/data", "/app/certs"]
+VOLUME ["/downloads", "/app/data"]
 
-# Start the application using the entrypoint script
-ENTRYPOINT ["./entrypoint.sh"]
+# Start the application directly (no entrypoint script needed for certs)
+CMD ["npm", "start"]

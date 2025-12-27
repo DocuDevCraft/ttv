@@ -26,10 +26,13 @@ initDB();
 
 const ANNOUNCE_LIST = [
   'udp://tracker.opentrackr.org:1337/announce',
+  'http://tracker.opentrackr.org:1337/announce',
   'udp://tracker.openbittorrent.com:80',
-  'udp://tracker.coppersurfer.tk:6969',
-  'udp://p4p.arenabg.com:1337',
-  'udp://tracker.leechers-paradise.org:6969'
+  'http://tracker.internetwarriors.net:1337/announce',
+  'udp://tracker.leechers-paradise.org:6969',
+  'wss://tracker.webtorrent.io',
+  'wss://tracker.openwebtorrent.com',
+  'wss://tracker.btorrent.xyz'
 ];
 
 // Initialize WebTorrent Client
@@ -52,7 +55,14 @@ const client = new WebTorrent({
 // Middleware
 app.use(cors({ origin: '*', methods: ['GET', 'POST'] }));
 app.use(express.json());
-app.use(morgan('combined'));
+app.use(morgan('combined', {
+  skip: (req, res) => {
+    return req.url.startsWith('/torrents') ||
+           req.url.startsWith('/health') ||
+           req.url.startsWith('/assets') ||
+           req.url.startsWith('/stream');
+  }
+}));
 
 // 1. Serve HLS streams PUBLICLY (priority)
 app.use('/stream', express.static(TRANSCODE_DIR));
@@ -141,6 +151,8 @@ app.get('/torrents', (req, res) => {
 app.post('/add', (req, res) => {
   let { magnet } = req.body;
 
+  if (magnet) magnet = magnet.trim();
+
   console.log(`[DEBUG] Received add request. Magnet starts with: ${magnet?.substring(0, 20)}`);
 
   if (!magnet) {
@@ -170,6 +182,10 @@ app.post('/add', (req, res) => {
     const queueMsg = `Magnet added to queue. InfoHash: ${torrent.infoHash}`;
     console.log(queueMsg);
     emitLog(queueMsg, 'info');
+
+    torrent.on('wire', (wire, addr) => {
+      console.log(`[DEBUG] Peer connected: ${addr}`);
+    });
 
     torrent.on('done', () => {
       const doneMsg = `Torrent finished: ${torrent.name}`;

@@ -133,25 +133,31 @@ app.post('/add', (req, res) => {
   }
 
   try {
-    client.add(magnet, { path: DOWNLOAD_DIR }, (torrent) => {
-      const msg = `Torrent added: ${torrent.infoHash}`;
+    const torrent = client.add(magnet, { path: DOWNLOAD_DIR }, (torrent) => {
+      // This callback fires when metadata is ready
+      const msg = `Torrent metadata ready: ${torrent.name}`;
       console.log(msg);
       emitLog(msg, 'success');
-
-      torrent.on('done', () => {
-        const doneMsg = `Torrent finished: ${torrent.name}`;
-        console.log(doneMsg);
-        emitLog(doneMsg, 'success');
-      });
-
-      torrent.on('error', (err) => {
-        const errMsg = `Torrent error: ${err.message}`;
-        console.error(errMsg);
-        emitLog(errMsg, 'error');
-      });
     });
 
-    res.json({ message: 'Download started' });
+    // Log immediately after adding to queue
+    const queueMsg = `Magnet added to queue. InfoHash: ${torrent.infoHash}`;
+    console.log(queueMsg);
+    emitLog(queueMsg, 'info');
+
+    torrent.on('done', () => {
+      const doneMsg = `Torrent finished: ${torrent.name}`;
+      console.log(doneMsg);
+      emitLog(doneMsg, 'success');
+    });
+
+    torrent.on('error', (err) => {
+      const errMsg = `Torrent error: ${err.message}`;
+      console.error(errMsg);
+      emitLog(errMsg, 'error');
+    });
+
+    res.json({ message: 'Download started', infoHash: torrent.infoHash });
   } catch (err) {
     console.error('Error adding torrent:', err);
     res.status(500).json({ error: 'Failed to add torrent' });

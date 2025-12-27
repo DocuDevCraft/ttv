@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 2096;
-const DOWNLOAD_DIR = '/downloads';
+const DOWNLOAD_DIR = path.join(process.cwd(), 'downloads');
 const FRONTEND_DIR = path.join(__dirname, '../public');
 
 // Ensure database is initialized
@@ -119,17 +119,10 @@ app.get('/torrents', (req, res) => {
 app.post('/add', (req, res) => {
   const { magnet } = req.body;
 
+  console.log(`[DEBUG] Received add request. Magnet starts with: ${magnet?.substring(0, 20)}`);
+
   if (!magnet) {
     return res.status(400).json({ error: 'Magnet link is required' });
-  }
-
-  // Check if already added
-  const existing = client.get(magnet);
-  if (existing) {
-    return res.json({
-      message: 'Torrent already exists',
-      infoHash: existing.infoHash
-    });
   }
 
   try {

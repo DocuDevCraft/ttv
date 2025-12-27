@@ -18,6 +18,9 @@ export default function Dashboard({ token, onLogout }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTorrents(res.data);
+      if (res.data.length === 0) {
+        console.warn('[Client] Received empty torrent list');
+      }
     } catch (err) {
       console.error(err);
     }

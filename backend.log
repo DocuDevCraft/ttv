@@ -1,0 +1,21 @@
+
+> torrent-streaming-backend@1.0.0 start
+> node src/index.js
+
+Cleanup job scheduled to run daily at 00:00
+HTTP Server running on port 2096
+Download directory: ./downloads
+🟢 SERVER STARTED/RESTARTED on port 2096
+Database initialized with default user: admin / admin
+::1 - - [27/Dec/2025:13:18:31 +0000] "GET / HTTP/1.1" 401 45 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+::1 - - [27/Dec/2025:13:19:45 +0000] "GET / HTTP/1.1" 200 464 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+::1 - - [27/Dec/2025:13:19:45 +0000] "GET /assets/index-CBCromlN.css HTTP/1.1" 200 77693 "http://localhost:2096/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+::1 - - [27/Dec/2025:13:19:45 +0000] "GET /assets/index-BvnXs1PY.js HTTP/1.1" 200 732071 "http://localhost:2096/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+::1 - - [27/Dec/2025:13:20:09 +0000] "GET / HTTP/1.1" 200 464 "-" "curl/8.5.0"
+::1 - - [27/Dec/2025:13:21:36 +0000] "GET /login HTTP/1.1" 401 45 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+::1 - - [27/Dec/2025:13:23:28 +0000] "GET / HTTP/1.1" 200 464 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+::1 - - [27/Dec/2025:13:23:28 +0000] "GET /assets/index-CBCromlN.css HTTP/1.1" 200 77693 "http://localhost:2096/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+::1 - - [27/Dec/2025:13:23:28 +0000] "GET /assets/index-BvnXs1PY.js HTTP/1.1" 200 732071 "http://localhost:2096/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+::1 - - [27/Dec/2025:13:23:28 +0000] "POST /auth/login HTTP/1.1" 200 165 "http://localhost:2096/login" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"
+Current torrents in memory: 0
+::1 - - [27/Dec/2025:13:23:28 +0000] "GET /torrents HTTP/1.1" 200 2 "http://localhost:2096/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.16 Safari/537.36"

@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
 import http from 'http';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initCleanupJob } from './cleanup.js';
 import { initDB } from './db.js';
@@ -96,6 +97,7 @@ app.get('/stream/init/:infoHash', async (req, res) => {
  * Returns a list of currently active torrents.
  */
 app.get('/torrents', (req, res) => {
+  console.log('Current torrents in memory:', client.torrents.length);
   const torrents = client.torrents.map(torrent => ({
     infoHash: torrent.infoHash,
     name: torrent.name,
@@ -131,6 +133,11 @@ app.post('/add', (req, res) => {
   }
 
   try {
+    // Ensure download directory exists before adding
+    if (!fs.existsSync(DOWNLOAD_DIR)) {
+      fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+    }
+
     const torrent = client.add(magnet, { path: DOWNLOAD_DIR }, (torrent) => {
       // This callback fires when metadata is ready
       const msg = `Torrent metadata ready: ${torrent.name}`;
@@ -201,9 +208,17 @@ const server = http.createServer(app);
 initSocket(server);
 
 server.listen(PORT, () => {
+  // Ensure download directory exists on startup
+  if (!fs.existsSync(DOWNLOAD_DIR)) {
+    fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+  }
+
   console.log(`HTTP Server running on port ${PORT}`);
   console.log(`Download directory: ${DOWNLOAD_DIR}`);
-  emitLog(`Server started on port ${PORT}`);
+
+  const startMsg = `🟢 SERVER STARTED/RESTARTED on port ${PORT}`;
+  console.log(startMsg);
+  emitLog(startMsg);
 });
 
 // Graceful Shutdown

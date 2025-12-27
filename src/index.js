@@ -258,6 +258,16 @@ server.listen(PORT, () => {
   emitLog(startMsg);
 });
 
+// Periodic Status Log
+setInterval(() => {
+  const memoryUsage = process.memoryUsage().rss / 1024 / 1024;
+  console.log(`[SYSTEM] Uptime: ${process.uptime().toFixed(0)}s | Memory: ${memoryUsage.toFixed(0)}MB | Active Torrents: ${client.torrents.length}`);
+
+  client.torrents.forEach(torrent => {
+    console.log(`[STATUS] ${torrent.name || 'Fetching Metadata...'} | InfoHash: ${torrent.infoHash} | Peers: ${torrent.numPeers} | Progress: ${(torrent.progress * 100).toFixed(1)}% | Speed: ${(torrent.downloadSpeed / 1024).toFixed(0)} KB/s`);
+  });
+}, 10000);
+
 // Graceful Shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
